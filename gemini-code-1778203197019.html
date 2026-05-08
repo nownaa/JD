@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>생기부 분석 센터</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700;900&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+        :root{  --bg:#F5F3EE; --bg2:#EDEBE4; --card:#FDFCF9;  --navy:#0F2044; --navy2:#1A3460;  --blue:#1D54C4; --blue-l:#E8EFFE; --blue-m:#C5D4FA;  --green:#0D6E3F; --green-l:#E6F7EE;  --amber:#9A5000; --amber-l:#FEF3E2;  --rose:#A31737; --rose-l:#FDE8ED;  --text:#0D1B2A; --text2:#4A5568; --text3:#94A3B8;  --border:#DDD9CF;  --shadow:0 2px 16px rgba(15,32,68,.07);  --shadow-lg:0 8px 40px rgba(15,32,68,.12);  --r:20px; --r-sm:12px;}
+        html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif}
+        #app{max-width:480px;margin:0 auto;min-height:100vh;position:relative;overflow:hidden;background:var(--bg)}
+        #app::before{  content:'';position:fixed;inset:0;max-width:480px;left:50%;transform:translateX(-50%);  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");  pointer-events:none;z-index:1000;opacity:.4;}
+        .screen{  position:absolute;width:100%;top:0;left:0;min-height:100vh;  display:flex;flex-direction:column;background:var(--bg);  transition:transform .38s cubic-bezier(.4,0,.2,1),opacity .38s;will-change:transform;}
+        .screen.hidden{transform:translateX(110%);opacity:0;pointer-events:none}
+        .screen.behind{transform:translateX(-30%);opacity:0;pointer-events:none}
+        .screen.active{transform:translateX(0);opacity:1}
+        .sbar{height:52px;padding:14px 22px 0;display:flex;align-items:flex-end;justify-content:space-between;flex-shrink:0}
+        .sbar-time{font-size:13px;font-weight:700}
+        .nav-hd{display:flex;align-items:center;padding:8px 22px 10px;gap:12px;flex-shrink:0}
+        .back-btn{width:36px;height:36px;border-radius:11px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:var(--navy);box-shadow:var(--shadow);transition:all .15s;flex-shrink:0}
+        .back-btn:hover{background:var(--navy);color:#fff}
+        .nav-title{font-size:16px;font-weight:700;flex:1}
+        .sbody{flex:1;overflow-y:auto;padding:0 20px 100px;display:flex;flex-direction:column;gap:14px}
+        .sbody::-webkit-scrollbar{display:none}
+        .sec-label{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3)}
+        h1{font-family:'Noto Serif KR',serif;font-size:26px;font-weight:900;line-height:1.28;letter-spacing:-.5px}
+        .hero{background:linear-gradient(140deg,var(--navy) 0%,#1A3A7A 100%);border-radius:var(--r);padding:26px 24px 22px;position:relative;overflow:hidden}
+        .hero-deco1{position:absolute;top:-24px;right:-24px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.06)}
+        .hero-deco2{position:absolute;bottom:-30px;right:30px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.04)}
+        .hero-eyebrow{font-size:10px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,.5);margin-bottom:10px;text-transform:uppercase}
+        .hero h1{color:#fff;margin-bottom:6px}
+        .hero-sub{font-size:12px;color:rgba(255,255,255,.5);margin-bottom:20px;line-height:1.6}
+        .hero-btn{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:12px;padding:10px 16px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;transition:all .2s;font-family:'Noto Sans KR',sans-serif}
+        .hero-btn:hover{background:rgba(255,255,255,.25)}
+        .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .stat-card{background:var(--card);border-radius:var(--r-sm);border:1px solid var(--border);padding:14px;box-shadow:var(--shadow)}
+        .stat-num{font-size:26px;font-weight:900;font-family:'Noto Serif KR',serif;color:var(--navy);line-height:1}
+        .stat-lbl{font-size:10px;color:var(--text3);margin-top:4px}
+        .item-list{display:flex;flex-direction:column;gap:8px}
+        .item-row{background:var(--card);border-radius:var(--r-sm);border:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:13px;cursor:pointer;transition:all .2s;box-shadow:var(--shadow)}
+        .item-row:hover{border-color:var(--blue-m);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+        .item-ic{width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+        .item-info{flex:1}.item-name{font-size:13px;font-weight:700;margin-bottom:2px}.item-sub{font-size:11px;color:var(--text3)}
+        .field-label{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--text3);margin-bottom:7px}
+        .input-card{background:var(--card);border-radius:var(--r-sm);border:1px solid var(--border);padding:14px 16px;transition:border-color .2s;box-shadow:var(--shadow)}
+        .input-card:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-l)}
+        textarea{width:100%;border:none;outline:none;resize:none;font-family:'Noto Sans KR',sans-serif;font-size:13px;color:var(--text);background:transparent;line-height:1.8}
+        textarea::placeholder{color:var(--text3)}
+        .chips{display:flex;gap:7px;flex-wrap:wrap}
+        .chip{padding:7px 14px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--card);color:var(--text2);transition:all .18s;font-family:'Noto Sans KR',sans-serif}
+        .chip:hover{border-color:var(--blue);color:var(--blue)}
+        .chip.on-navy{background:var(--navy);border-color:var(--navy);color:#fff}
+        .chip.on-blue{background:var(--blue-l);border-color:var(--blue);color:var(--blue)}
+        .chip.on-green{background:var(--green-l);border-color:var(--green);color:var(--green)}
+        .method-tabs{display:flex;gap:0;background:var(--bg2);border-radius:12px;padding:3px;margin-bottom:10px}
+        .mtab{flex:1;padding:9px;text-align:center;font-size:12px;font-weight:600;color:var(--text3);border-radius:9px;cursor:pointer;transition:all .2s;font-family:'Noto Sans KR',sans-serif}
+        .mtab.act{background:var(--card);color:var(--navy);box-shadow:var(--shadow)}
+        .pdf-zone{border:2px dashed var(--border);border-radius:var(--r-sm);padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--card);position:relative}
+        .pdf-zone:hover,.pdf-zone.drag{border-color:var(--blue);background:var(--blue-l)}
+        .pdf-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+        .pdf-icon{font-size:32px;margin-bottom:10px}
+        .pdf-zone-title{font-size:13px;font-weight:700;color:var(--text2);margin-bottom:4px}
+        .pdf-zone-sub{font-size:11px;color:var(--text3)}
+        .pdf-extracting{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--r-sm);background:var(--blue-l);border:1px solid var(--blue-m);font-size:12px;font-weight:600;color:var(--blue)}
+        .spin{animation:spin .8s linear infinite;display:inline-block}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .pdf-preview{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:var(--r-sm);border:1px solid var(--border);padding:12px 14px;box-shadow:var(--shadow)}
+        .pdf-thumb{width:40px;height:48px;background:var(--rose-l);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:1px solid rgba(163,23,55,.15)}
+        .pdf-info{flex:1;min-width:0}.pdf-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pdf-meta{font-size:10px;color:var(--text3);margin-top:3px}
+        .pdf-remove{width:30px;height:30px;border-radius:9px;background:var(--bg2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;transition:background .15s;font-family:'Noto Sans KR',sans-serif}
+        .pdf-remove:hover{background:var(--rose-l)}
+        .pdf-text-preview{background:var(--bg2);border-radius:var(--r-sm);padding:12px 14px;max-height:120px;overflow-y:auto;font-size:11px;color:var(--text2);line-height:1.75;white-space:pre-wrap}
+        .btn-primary{background:var(--navy);border-radius:14px;padding:16px;text-align:center;font-size:14px;font-weight:800;color:#fff;cursor:pointer;transition:all .2s;border:none;width:100%;font-family:'Noto Sans KR',sans-serif;letter-spacing:-.3px;box-shadow:0 4px 20px rgba(15,32,68,.25)}
+        .btn-primary:hover{background:var(--navy2);transform:translateY(-2px);box-shadow:0 8px 30px rgba(15,32,68,.3)}
+        .btn-primary:active{transform:scale(.98)}
+        .btn-primary:disabled{background:var(--text3);cursor:not-allowed;transform:none;box-shadow:none}
+        .loading-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:40px}
+        .orb{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--blue));display:flex;align-items:center;justify-content:center;font-size:32px;animation:orb-pulse 2s ease-in-out infinite;box-shadow:0 0 40px rgba(29,84,196,.3)}
+        @keyframes orb-pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(29,84,196,.3)}50%{transform:scale(1.06);box-shadow:0 0 0 20px rgba(29,84,196,0)}}
+        .loading-steps{display:flex;flex-direction:column;gap:8px;width:100%}
+        .lstep{display:flex;align-items:center;gap:11px;padding:11px 14px;border-radius:12px;font-size:12px;color:var(--text2);background:var(--card);border:1px solid var(--border);transition:all .3s}
+        .lstep.act{background:var(--blue-l);border-color:var(--blue-m);color:var(--blue);font-weight:700}
+        .lstep.done{background:var(--green-l);border-color:#86EFAC;color:var(--green)}
+        .ldot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;transition:all .3s}
+        .lstep.act .ldot{background:var(--blue);animation:dot-blink .7s infinite alternate}
+        .lstep.done .ldot{background:var(--green)}
+        @keyframes dot-blink{from{opacity:.3}to{opacity:1}}
+        .score-hero{background:linear-gradient(140deg,var(--navy) 0%,#162D5A 100%);border-radius:var(--r);padding:20px 22px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow-lg)}
+        .sc-num{font-size:52px;font-weight:900;color:#fff;line-height:1;font-family:'Noto Serif KR',serif}
+        .sc-max{font-size:15px;color:rgba(255,255,255,.35);font-weight:400}
+        .sc-label{font-size:10px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,.45);margin-bottom:6px;text-transform:uppercase}
+        .sc-tags{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+        .sc-tag{background:rgba(255,255,255,.12);border-radius:8px;padding:5px 11px;font-size:10px;font-weight:700;color:#fff;border:1px solid rgba(255,255,255,.15)}
+        .result-card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow)}
+        .rc-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+        .rc-ic{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+        .rc-title{font-size:13px;font-weight:700;flex:1}
+        .rc-body{padding:16px 18px}
+        .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+        .bar-lbl{font-size:12px;color:var(--text2);width:64px;flex-shrink:0}
+        .bar-track{flex:1;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden}
+        .bar-fill{height:100%;border-radius:4px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+        .bar-pct{font-size:11px;font-weight:800;width:34px;text-align:right;flex-shrink:0}
+        .explore-block{background:var(--card);border-radius:var(--r);border:1.5px solid var(--navy);padding:18px;cursor:pointer;transition:all .2s;box-shadow:var(--shadow)}
+        .explore-block:hover{background:var(--blue-l);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+        .ex-badge{display:inline-block;background:var(--blue-l);color:var(--blue);font-size:10px;font-weight:700;padding:3px 10px;border-radius:8px;margin-bottom:9px}
+        .ex-title{font-size:14px;font-weight:800;margin-bottom:6px;line-height:1.4}
+        .ex-body{font-size:12px;color:var(--text2);line-height:1.7}.ex-link{font-size:11px;font-weight:700;color:var(--blue);margin-top:10px}
+        .sec-block{background:var(--card);border-radius:var(--r-sm);border:1px solid var(--border);padding:14px 16px;cursor:pointer;transition:all .2s;box-shadow:var(--shadow)}
+        .sb-head{display:flex;align-items:center;gap:9px;margin-bottom:9px}.sb-ic{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+        .sb-name{font-size:12px;font-weight:800;flex:1}.sb-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px}
+        .sb-text{font-size:11px;color:var(--text2);line-height:1.7;border-left:3px solid var(--border);padding-left:10px}
+        .green-cta{background:linear-gradient(135deg,var(--green),#0A5530);border-radius:var(--r);padding:20px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .2s;box-shadow:var(--shadow-lg)}
+        .bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:74px;background:rgba(245,243,238,.9);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;padding:0 8px 10px;z-index:500}
+        .ni{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;cursor:pointer;padding-top:6px}
+        .ni-ico{font-size:22px;transition:transform .15s}.ni-lbl{font-size:9px;font-weight:500;color:var(--text3)}
+        .ni.act .ni-lbl{color:var(--navy);font-weight:800}.ni.act .ni-ico{transform:scale(1.15)}
+        .ni-bar{width:22px;height:3px;border-radius:2px;background:var(--navy);opacity:0;transition:opacity .2s;margin-top:1px}.ni.act .ni-bar{opacity:1}
+        .modal-bg{position:fixed;inset:0;background:rgba(15,32,68,.5);backdrop-filter:blur(8px);z-index:900;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+        .modal-bg.open{opacity:1;pointer-events:all}.modal-sheet{width:100%;max-width:480px;background:var(--card);border-radius:24px 24px 0 0;padding:28px 24px 40px;transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1)}
+        .modal-bg.open .modal-sheet{transform:translateY(0)}.modal-handle{width:40px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 20px}
+        .api-input{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:13px 15px;font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;background:var(--bg);color:var(--text);margin-bottom:12px}
+        .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--navy);color:#fff;padding:10px 20px;border-radius:12px;font-size:12px;font-weight:600;z-index:800;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;box-shadow:var(--shadow-lg)}
+        .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+        .dev-actions{display:flex;gap:8px;margin-top:12px}
+        .dev-btn-p{flex:1;padding:11px;border-radius:11px;font-size:12px;font-weight:700;cursor:pointer;border:none;background:var(--navy);color:#fff}
+        .dev-btn-s{flex:1;padding:11px;border-radius:11px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text2)}
+        .fade-up{animation:fade-up .4s ease forwards}
+        @keyframes fade-up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- HOME -->
+        <div id="s-home" class="screen active">
+            <div class="sbar">
+                <span class="sbar-time">--:--</span>
+                <span style="font-size:11px;font-weight:700;cursor:pointer;color:var(--blue)" onclick="openApiModal()">⚙ API 키</span>
+            </div>
+            <div style="padding:6px 22px 10px">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:6px">안녕하세요 👋</div>
+                <h1>생기부<br>분석 센터</h1>
+            </div>
+            <div class="sbody">
+                <div class="hero fade-up">
+                    <div class="hero-deco1"></div><div class="hero-deco2"></div>
+                    <div class="hero-eyebrow">✦ AI 맞춤 분석</div>
+                    <h1>생기부를 입력하면<br>심화탐구 방향을<br>찾아드려요</h1>
+                    <div class="hero-sub" style="margin-top:8px">교과세특부터 행특까지 전체 분석<br>나만의 탐구 로드맵을 만들어보세요</div>
+                    <div class="hero-btn" onclick="goTo('s-input')">+ 새 분석 시작하기</div>
+                </div>
+                <div class="stat-row fade-up">
+                    <div class="stat-card"><div class="stat-num" id="stat-count">0</div><div class="stat-lbl">누적 분석 횟수</div></div>
+                    <div class="stat-card"><div class="stat-num" style="font-size:18px;padding-top:6px" id="stat-last">-</div><div class="stat-lbl">최근 분석</div></div>
+                </div>
+                <div class="sec-label fade-up">항목별 분석 입력</div>
+                <div class="item-list">
+                    <div class="item-row fade-up" onclick="presetCat('교과세특')"><div class="item-ic" style="background:var(--blue-l)">📖</div><div class="item-info"><div class="item-name">교과 학습 (세특)</div><div class="item-sub">과목별 세부능력특기사항 분석</div></div><span style="color:var(--text3)">›</span></div>
+                    <div class="item-row fade-up" onclick="presetCat('창체')"><div class="item-ic" style="background:var(--green-l)">🌱</div><div class="item-info"><div class="item-name">창의적 체험활동</div><div class="item-sub">자율·동아리·봉사·진로 분석</div></div><span style="color:var(--text3)">›</span></div>
+                    <div class="item-row fade-up" onclick="presetCat('독서')"><div class="item-ic" style="background:var(--amber-l)">📚</div><div class="item-info"><div class="item-name">독서 활동</div><div class="item-sub">연계 탐구 방향 자동 제안</div></div><span style="color:var(--text3)">›</span></div>
+                    <div class="item-row fade-up" onclick="presetCat('행특')"><div class="item-ic" style="background:var(--rose-l)">⭐</div><div class="item-info"><div class="item-name">행동특성·종합의견</div><div class="item-sub">강점 키워드 추출 및 분석</div></div><span style="color:var(--text3)">›</span></div>
+                </div>
+            </div>
+            <div class="bnav">
+                <div class="ni act" onclick="goTo('s-home')"><div class="ni-ico">🏠</div><div class="ni-lbl">홈</div><div class="ni-bar"></div></div>
+                <div class="ni" onclick="goTo('s-input')"><div class="ni-ico">📝</div><div class="ni-lbl">입력</div><div class="ni-bar"></div></div>
+                <div class="ni" onclick="navResult()"><div class="ni-ico">💡</div><div class="ni-lbl">결과</div><div class="ni-bar"></div></div>
+                <div class="ni" onclick="openApiModal()"><div class="ni-ico">⚙️</div><div class="ni-lbl">설정</div><div class="ni-bar"></div></div>
+            </div>
+        </div>
+
+        <!-- INPUT -->
+        <div id="s-input" class="screen hidden">
+            <div class="sbar"><span class="sbar-time">--:--</span></div>
+            <div class="nav-hd">
+                <div class="back-btn" onclick="goBack()">‹</div>
+                <div class="nav-title">생기부 입력</div>
+                <div style="font-size:11px;font-weight:700;color:var(--blue);cursor:pointer" onclick="clearInput()">초기화</div>
+            </div>
+            <div class="sbody">
+                <div>
+                    <div class="field-label">학년 선택</div>
+                    <div class="chips">
+                        <div class="chip" data-g="grade" data-v="1학년" onclick="pickChip(this,'grade','navy')">1학년</div>
+                        <div class="chip" data-g="grade" data-v="2학년" onclick="pickChip(this,'grade','navy')">2학년</div>
+                        <div class="chip" data-g="grade" data-v="3학년" onclick="pickChip(this,'grade','navy')">3학년</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="field-label">항목 선택</div>
+                    <div class="chips">
+                        <div class="chip" data-g="cat" data-v="교과세특" onclick="pickChip(this,'cat','blue')">교과세특</div>
+                        <div class="chip" data-g="cat" data-v="창체" onclick="pickChip(this,'cat','blue')">창체</div>
+                        <div class="chip" data-g="cat" data-v="독서" onclick="pickChip(this,'cat','blue')">독서</div>
+                        <div class="chip" data-g="cat" data-v="행특" onclick="pickChip(this,'cat','blue')">행특</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="field-label">입력 방식</div>
+                    <div class="method-tabs">
+                        <div class="mtab act" id="mtab-text" onclick="switchMethod('text')">📝 직접 입력</div>
+                        <div class="mtab" id="mtab-pdf" onclick="switchMethod('pdf')">📄 PDF 업로드</div>
+                    </div>
+                    <div id="panel-text">
+                        <div class="input-card"><textarea id="input-text" rows="8" placeholder="생기부 내용을 여기에 붙여넣기 하세요..."></textarea></div>
+                    </div>
+                    <div id="panel-pdf" style="display:none">
+                        <div id="pdf-dropzone" class="pdf-zone" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+                            <input type="file" accept=".pdf" onchange="fileSelect(event)">
+                            <div class="pdf-icon">📄</div>
+                            <div class="pdf-zone-title">PDF 파일을 올려주세요</div>
+                        </div>
+                        <div id="pdf-loading" class="pdf-extracting" style="display:none"><span class="spin">⏳</span><span id="pdf-progress">PDF 추출 중...</span></div>
+                        <div id="pdf-done" style="display:none">
+                            <div class="pdf-preview">
+                                <div class="pdf-thumb">📄</div>
+                                <div class="pdf-info"><div class="pdf-name" id="pdf-fname"></div><div class="pdf-meta" id="pdf-fmeta"></div></div>
+                                <button class="pdf-remove" onclick="removePdf()">✕</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="field-label">희망 진로</div>
+                    <div class="input-card"><textarea id="input-career" rows="2" placeholder="예) 공학계열, 의학, 데이터사이언스..."></textarea></div>
+                </div>
+                <button class="btn-primary" onclick="startAnalysis()">✦ &nbsp;AI 분석 시작</button>
+            </div>
+        </div>
+
+        <!-- LOADING -->
+        <div id="s-loading" class="screen hidden">
+            <div class="loading-wrap">
+                <div class="orb">🔍</div>
+                <div style="text-align:center">
+                    <div style="font-family:'Noto Serif KR',serif;font-size:20px;font-weight:900;color:var(--navy);margin-bottom:8px">분석 중입니다</div>
+                </div>
+                <div class="loading-steps">
+                    <div class="lstep act" id="lst0"><div class="ldot"></div>생기부 구조 분석</div>
+                    <div class="lstep" id="lst1"><div class="ldot"></div>핵심 역량 추출</div>
+                    <div class="lstep" id="lst2"><div class="ldot"></div>심화탐구 주제 생성</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULT -->
+        <div id="s-result" class="screen hidden">
+            <div class="nav-hd" style="margin-top:40px">
+                <div class="back-btn" onclick="goBack()">‹</div>
+                <div class="nav-title">분석 결과</div>
+            </div>
+            <div class="sbody">
+                <div class="score-hero fade-up">
+                    <div>
+                        <div class="sc-label">종합 점수</div>
+                        <div><span class="sc-num" id="r-score">0</span><span class="sc-max">/100</span></div>
+                        <div id="r-summary-short" style="font-size:11px;color:rgba(255,255,255,.6);margin-top:6px"></div>
+                    </div>
+                    <div class="sc-tags" id="r-tags"></div>
+                </div>
+                <div class="result-card fade-up">
+                    <div class="rc-head"><div class="rc-ic" style="background:var(--blue-l)">📊</div><div class="rc-title">역량 분석</div></div>
+                    <div class="rc-body" id="r-bars"></div>
+                </div>
+                <div class="sec-label">✦ AI 심화탐구 제안</div>
+                <div id="r-explores" style="display:flex;flex-direction:column;gap:10px"></div>
+                <div class="green-cta fade-up" onclick="goTo('s-develop')">
+                    <div style="font-size:28px">✏️</div>
+                    <div><div style="font-size:14px;font-weight:800;color:#fff">문장 발전시키기</div><div style="font-size:11px;color:rgba(255,255,255,.6)">더 강력한 표현으로 개선</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DEVELOP -->
+        <div id="s-develop" class="screen hidden">
+            <div class="nav-hd" style="margin-top:40px">
+                <div class="back-btn" onclick="goBack()">‹</div>
+                <div class="nav-title">문장 발전소</div>
+            </div>
+            <div class="sbody">
+                <div class="field-label">개선 방향 선택</div>
+                <div class="chips" id="dir-chips">
+                    <div class="chip on-navy" data-dir="구체성 강화" onclick="pickDir(this)">구체성 강화</div>
+                    <div class="chip" data-dir="진로 연계" onclick="pickDir(this)">진로 연계</div>
+                    <div class="chip" data-dir="탐구 과정 부각" onclick="pickDir(this)">탐구 과정 부각</div>
+                </div>
+                <button class="btn-primary" id="dev-btn" onclick="runDevelop()">✨ 문장 개선하기</button>
+                <div id="dev-result" style="display:none;margin-top:20px">
+                    <div class="result-card">
+                        <div class="rc-head"><div class="rc-ic" style="background:var(--green-l)">✨</div><div class="rc-title">AI 개선 결과</div></div>
+                        <div class="rc-body" id="dev-output" style="font-size:13px; line-height:1.8"></div>
+                        <div class="dev-actions" style="padding:15px"><button class="dev-btn-p" onclick="copyText()">📋 복사하기</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API MODAL -->
+        <div class="modal-bg" id="api-modal" onclick="closeOutside(event)">
+            <div class="modal-sheet">
+                <div class="modal-handle"></div>
+                <div style="font-weight:800;margin-bottom:10px">🔑 Anthropic API 키</div>
+                <input class="api-input" id="api-key-input" type="password" placeholder="sk-ant-api03-...">
+                <button class="btn-primary" onclick="saveApiKey()">저장하기</button>
+            </div>
+        </div>
+        <div class="toast" id="toast"></div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        let curScreen = 's-home', navHistory = [], analysisResult = null;
+        let grade = '', cat = '', dir = '구체성 강화', pdfText = '', inputMethod = 'text';
+
+        function goTo(id) {
+            document.getElementById(curScreen).classList.replace('active', 'behind');
+            document.getElementById(id).classList.remove('hidden', 'behind');
+            document.getElementById(id).classList.add('active');
+            navHistory.push(curScreen); curScreen = id;
+        }
+        function goBack() {
+            if(!navHistory.length) return;
+            const prev = navHistory.pop();
+            document.getElementById(curScreen).classList.add('hidden');
+            document.getElementById(prev).classList.replace('behind', 'active');
+            curScreen = prev;
+        }
+        function openApiModal() { document.getElementById('api-modal').classList.add('open'); }
+        function closeApiModal() { document.getElementById('api-modal').classList.remove('open'); }
+        function saveApiKey() {
+            const key = document.getElementById('api-key-input').value.trim();
+            if(key.startsWith('sk-')) { localStorage.setItem('claude_api_key', key); toast("저장되었습니다."); closeApiModal(); }
+            else alert("올바른 키 형식이 아닙니다.");
+        }
+        function toast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+        function pickChip(el, group, color) {
+            document.querySelectorAll(`[data-g="${group}"]`).forEach(c => c.className='chip');
+            el.classList.add(`on-${color}`);
+            if(group==='grade') grade = el.dataset.v;
+            if(group==='cat') cat = el.dataset.v;
+        }
+        function switchMethod(m) {
+            inputMethod = m;
+            document.getElementById('panel-text').style.display = m==='text'?'':'none';
+            document.getElementById('panel-pdf').style.display = m==='pdf'?'':'none';
+            document.getElementById('mtab-text').classList.toggle('act', m==='text');
+            document.getElementById('mtab-pdf').classList.toggle('act', m==='pdf');
+        }
+
+        async function processPdf(file) {
+            document.getElementById('pdf-dropzone').style.display = 'none';
+            document.getElementById('pdf-loading').style.display = 'flex';
+            try {
+                const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+                let txt = "";
+                for (let i=1; i<=pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const content = await page.getTextContent();
+                    txt += content.items.map(item => item.str).join(" ") + "\n";
+                }
+                pdfText = txt;
+                document.getElementById('pdf-loading').style.display = 'none';
+                document.getElementById('pdf-done').style.display = 'block';
+                document.getElementById('pdf-fname').innerText = file.name;
+                toast("PDF 추출 완료");
+            } catch (e) { toast("PDF 오류"); removePdf(); }
+        }
+        function fileSelect(e) { if(e.target.files[0]) processPdf(e.target.files[0]); }
+        function removePdf() { pdfText = ''; document.getElementById('pdf-done').style.display='none'; document.getElementById('pdf-dropzone').style.display='block'; }
+
+        async function startAnalysis() {
+            const apiKey = localStorage.getItem('claude_api_key');
+            if(!apiKey) { openApiModal(); return; }
+            const content = inputMethod==='text'?document.getElementById('input-text').value:pdfText;
+            if(content.length < 10) { toast("내용을 입력해주세요"); return; }
+
+            goTo('s-loading');
+            const prompt = `생기부 분석 전문가로서 다음 내용을 JSON으로 분석해줘: {score, summary_short, tags:[], capabilities:[{label, value}], explores:[{badge, title, body, link}], summary} \n내용: ${content}`;
+
+            try {
+                const resp = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'dangerously-allow-ut8-templates': 'true'},
+                    body: JSON.stringify({ model: "claude-3-5-sonnet-20240620", max_tokens: 1500, messages: [{role:"user", content: prompt}]})
+                });
+                const data = await resp.json();
+                analysisResult = JSON.parse(data.content[0].text.match(/\{[\s\S]*\}/)[0]);
+                renderResult();
+                goTo('s-result');
+            } catch (e) { alert("분석 실패: " + e.message); goBack(); }
+        }
+
+        function renderResult() {
+            const d = analysisResult;
+            document.getElementById('r-score').innerText = d.score;
+            document.getElementById('r-summary-short').innerText = d.summary_short;
+            document.getElementById('r-tags').innerHTML = d.tags.map(t=>`<div class="sc-tag"># ${t}</div>`).join('');
+            document.getElementById('r-bars').innerHTML = d.capabilities.map(c=>`<div class="bar-row"><div class="bar-lbl">${c.label}</div><div class="bar-track"><div class="bar-fill" style="width:${c.value}%"></div></div><div class="bar-pct">${c.value}%</div></div>`).join('');
+            document.getElementById('r-explores').innerHTML = d.explores.map(e=>`<div class="explore-block"><div class="ex-badge">${e.badge}</div><div class="ex-title">${e.title}</div><div class="ex-body">${e.body}</div><div class="ex-link">🔗 ${e.link}</div></div>`).join('');
+        }
+
+        function pickDir(el) { document.querySelectorAll('#dir-chips .chip').forEach(c=>c.className='chip'); el.classList.add('on-navy'); dir = el.dataset.dir; }
+        async function runDevelop() {
+            const apiKey = localStorage.getItem('claude_api_key');
+            const btn = document.getElementById('dev-btn');
+            btn.innerText = "생성 중..."; btn.disabled = true;
+            try {
+                const resp = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
+                    body: JSON.stringify({ model: "claude-3-5-sonnet-20240620", max_tokens: 800, messages: [{role:"user", content: `다음 문장을 ${dir} 방향으로 다듬어줘: ${inputMethod==='text'?document.getElementById('input-text').value.substring(0,300):pdfText.substring(0,300)}`}]})
+                });
+                const data = await resp.json();
+                document.getElementById('dev-output').innerText = data.content[0].text;
+                document.getElementById('dev-result').style.display = 'block';
+            } catch (e) { toast("실패"); } finally { btn.innerText = "✨ 문장 개선하기"; btn.disabled = false; }
+        }
+        function copyText() { navigator.clipboard.writeText(document.getElementById('dev-output').innerText); toast("복사됨"); }
+        function updateClock() { const n = new Date(); document.querySelectorAll('.sbar-time').forEach(el=>el.innerText = n.getHours().toString().padStart(2,'0')+":"+n.getMinutes().toString().padStart(2,'0')); }
+        setInterval(updateClock, 1000); updateClock();
+    </script>
+</body>
+</html>
